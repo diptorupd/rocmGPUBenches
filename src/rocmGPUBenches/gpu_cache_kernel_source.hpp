@@ -5,7 +5,10 @@
 namespace rocmgpubenches {
 
 // Generate GPU cache benchmark kernel source for runtime compilation via hipRTC
-inline std::string generate_gpu_cache_kernel_source(int N, int iters, int blockSize) {
+// This kernel is parameterized - N, iters, and blockSize are passed as kernel arguments
+// instead of being compiled into the source. This allows us to compile once and reuse
+// for different parameter values.
+inline std::string get_gpu_cache_kernel_source() {
     return R"(
 #include <hip/hip_runtime.h>
 
@@ -16,11 +19,11 @@ extern "C" __global__ void initKernel(float4 *A, size_t N) {
     }
 }
 
-extern "C" __global__ void sumKernel(float4 *__restrict__ A, const float4 *__restrict__ B) {
-    const int N = )" + std::to_string(N) + R"(;
-    const int iters = )" + std::to_string(iters) + R"(;
-    const int BLOCKSIZE = )" + std::to_string(blockSize) + R"(;
-    
+extern "C" __global__ void sumKernel(float4 *__restrict__ A, 
+                                      const float4 *__restrict__ B,
+                                      int N,
+                                      int iters,
+                                      int BLOCKSIZE) {
     float4 localSum = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
     B += threadIdx.x;
 
