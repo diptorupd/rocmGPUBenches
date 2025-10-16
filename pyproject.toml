@@ -1,0 +1,18 @@
+[build-system]
+requires = ["scikit-build-core", "pybind11"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "rocmGPUBenches"
+version = "0.0.1"
+description = "A tool for running ROCm GPU microbenchmarks."
+readme = "README.md"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: C++",
+]
+
+[tool.scikit-build]
+cmake.source-dir = "."
+wheel.packages = ["src/rocmGPUBenches"]
