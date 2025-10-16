@@ -49,3 +49,4 @@ Makefile
 
 # Database files
 *.db
+*.png

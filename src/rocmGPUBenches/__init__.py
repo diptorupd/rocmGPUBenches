@@ -18,9 +18,25 @@ except ImportError as e:
 
 # Python modules (always available)
 from .storage import BenchmarkDB
+from .visualization import (
+    plot_sweep, 
+    plot_comparison, 
+    plot_heatmap, 
+    plot_gpu_comparison_sweep,
+    format_data_size_axis,
+    setup_style
+)
 
 # Build __all__ dynamically
-__all__ = ['BenchmarkDB']
+__all__ = [
+    'BenchmarkDB',
+    'plot_sweep',
+    'plot_comparison',
+    'plot_heatmap',
+    'plot_gpu_comparison_sweep',
+    'format_data_size_axis',
+    'setup_style'
+]
 
 if _cpp_extensions_available:
     __all__.extend([
