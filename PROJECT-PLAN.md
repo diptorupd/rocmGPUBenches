@@ -7,239 +7,232 @@
 ### Key Features
 - **Dynamic Compilation**: Use hipRTC to compile HIP kernels on-the-fly
 - **Python API**: Easy-to-use Python interface for running benchmarks
+- **Generic Framework**: Configuration-based BenchmarkRunner for pluggable benchmarks
 - **Interactive Notebooks**: Jupyter integration for exploration and visualization
 - **Architecture-Aware**: Automatically detects and optimizes for GPU architecture
 
 ### Original Source
 Based on the [gpu-benches](https://github.com/te42kyfo/gpu-benches) repository, which contains microbenchmarks for NVIDIA and AMD GPUs. We are focusing exclusively on ROCm/AMD GPUs.
 
-## Goals
+## Current Status
 
-### Primary Goals
-1. ✅ **Consolidate Benchmarks**: Convert all CUDA microbenchmarks to HIP
-2. ✅ **Dynamic Compilation**: Integrate hipRTC for runtime kernel compilation
-3. ✅ **Python API**: Create a clean Python interface (GPUCacheBenchmark working!)
-4. ✅ **Execution Framework**: Execute compiled kernels and collect results
-5. 🔄 **Visualization**: Generate plots and performance metrics
-6. 🔄 **Jupyter Integration**: Interactive notebook experience
+### ✅ COMPLETED (Merged to main - Oct 16, 2025)
 
-### Secondary Goals
-- Performance comparison across different GPU architectures
-- CI/CD pipeline for automated testing
-- Documentation and examples
-- Package distribution via PyPI
-
-## Project Status
-
-### ✅ Completed
-
-#### Phase 1: Project Setup (Completed)
+#### Phase 1-4: Foundation & First Benchmark
 - [x] Created project structure with `scikit-build-core`
 - [x] Set up Python package layout
 - [x] Configured CMake build system (C++ only, no device code at build time)
 - [x] Added GPLv3 license (matching original project)
-- [x] Initialized git repository
-- [x] Pushed to GitHub: `github.com/diptorupd/rocmGPUBenches`
-
-#### Phase 2: Kernel Conversion (Completed)
-- [x] Hipified all CUDA microbenchmarks to HIP format
-- [x] Stored hipified kernels in `src/rocmGPUBenches/kernels/`
-- [x] Available benchmarks:
-  - `cuda-incore.hip`
-  - `cuda-memcpy.hip`
-  - `gpu-cache.hip`
-  - `gpu-l2-cache.hip`
-  - `gpu-l2-stream.hip`
-  - `gpu-latency.hip`
-  - `gpu-roofline.hip`
-  - `gpu-small-kernels.hip`
-  - `gpu-stream.hip`
-  - `gpu-strides.hip`
-  - `um-stream.hip`
-
-#### Phase 3: hipRTC Integration (Completed)
-- [x] Created `HipRTCCompiler` C++ class wrapper (header-only)
+- [x] Initialized git repository at `github.com/diptorupd/rocmGPUBenches`
+- [x] Hipified all 11 CUDA microbenchmarks to HIP format
+- [x] Created `HipRTCCompiler` C++ class wrapper
 - [x] Implemented pybind11 bindings for Python access
-- [x] Configured CMake to link HIP runtime and hipRTC libraries
-- [x] Successfully tested kernel compilation
 - [x] Added GPU architecture auto-detection
 - [x] **Architecture Decision**: Runtime compilation only - no device code at build time
-
-**Current GPU:** `gfx942:sramecc+:xnack-` (AMD MI325X)
-
-#### Phase 4: Kernel Execution Framework (Completed - First Benchmark!)
+- [x] Created first working benchmark (GPU Cache): 414 TB/s bandwidth!
 - [x] Copied shared utilities from gpu-benches (MeasurementSeries, dtime, gpu-error, rocm-metrics)
-- [x] Verified utilities are HIP-compatible
-- [x] Created `GPUCacheBenchmark` C++ class with runtime hipRTC compilation
-- [x] Implemented memory allocation and kernel execution
-- [x] Added HIP event-based timing
-- [x] Created Python bindings for `GPUCacheBenchmark`
-- [x] **Successfully tested end-to-end**: Running on MI325X, achieving 414 TB/s bandwidth!
-- [x] Kernel compilation happens at runtime via hipRTC
-- [x] Kernels are cached to avoid recompilation
 
-**Key Achievement**: First working benchmark using pure runtime compilation approach!
+#### Phase 5: Generic Benchmark Framework ✅
+- [x] **TODO 1**: Implemented generic BenchmarkRunner infrastructure
+  - Configuration-based design with BenchmarkConfig struct
+  - Flexible ParamMap using `std::variant<int, double, string>`
+  - `run()` and `sweep()` methods with parameter validation
+  - Memory allocation and kernel execution pipeline
+  - Python bindings with kwargs support
+- [x] **TODO 2**: Optimized kernel compilation strategy
+  - Runtime parameters instead of compile-time templates
+  - Single kernel compilation for all parameter combinations
+  - Added hipRTC optimization flags: -O3, -ffast-math, --gpu-max-threads-per-block=1024
+  - Result: 0.27s compilation, ~1.00x performance (already optimal)
+- [x] Repository organization and cleanup
+  - Moved HIP RTC files to `hiprtc_utils/` subdirectory
+  - Renamed `benchmarks/` → `framework/` (infrastructure)
+  - Created new `benchmarks/` for actual benchmark configs
+  - Deleted deprecated cache implementation (527 lines)
+  - Clear separation: framework/ (HOW), benchmarks/ (WHAT), kernels/ (CODE)
 
-### 🔄 Current Status
-
-**Current Phase**: Phase 5 - Generalizing the Benchmark Framework
-
-The GPU cache benchmark is working, but we need to:
-1. Generalize the approach for all 11 benchmarks
-2. Optimize compilation strategy (avoid compiling too many kernels)
-3. Define standard APIs and project structure
-
-### 📋 TODO: Critical Next Steps
-
-#### TODO 1: Generic GPUBenchmark Base Class API 🎯
-**Priority**: HIGH
-**Effort**: 2-3 sessions
-
-**Goal**: Make GPUCacheBenchmark into a generic framework
-
-- [ ] Design `GPUBenchmark` base class with virtual methods:
-  - `get_kernel_source()` - Returns kernel source as string
-  - `configure_kernel(params)` - Sets runtime parameters
-  - `run(iterations)` - Executes benchmark and returns results
-  - `get_results()` - Returns structured results
-- [ ] Refactor `GPUCacheBenchmark` to inherit from base class
-- [ ] Document the API for adding new benchmarks
-- [ ] Create example template for new benchmarks
-
-**Benefits**: All 11 benchmarks can plug into common framework
-
-#### TODO 2: Optimize Kernel Compilation Strategy 🚀
-**Priority**: HIGH
-**Effort**: 1-2 sessions
-
-**Current Issue**: We generate unique kernel for each (N, iters, blockSize) combination, causing 15+ compilations per sweep
-
-**Solutions to implement**:
-- [ ] **Use runtime parameters instead of compile-time constants**
-  - Compile one parameterized kernel
-  - Pass N, iters, blockSize as kernel arguments
-  - Trade-off: Slightly less optimal but 15x faster compilation
-- [ ] **Implement kernel caching**
-  - ✅ Already caching in memory
-  - [ ] Add disk-based cache (serialize compiled modules)
-  - [ ] Cache key: `(kernel_source_hash, gpu_arch)`
-- [ ] **Lazy compilation**
-  - Only compile when needed
-  - First run compiles, subsequent runs use cache
-
-**Expected speedup**: 10-15x faster for sweep tests
-
-#### TODO 3: Pre-compilation for Fixed GPU Architectures 📦
-**Priority**: MEDIUM
-**Effort**: 2-3 sessions
-
-**Goal**: Optional AOT (Ahead-of-Time) compilation at package build time
-
-- [ ] Add CMake option: `-DPRECOMPILE_KERNELS=ON`
-- [ ] Specify target architectures: `gfx90a,gfx942,gfx1100`
-- [ ] Use `hipcc --genco` to generate code objects
-- [ ] Bundle pre-compiled kernels in Python package
-- [ ] Runtime: Load pre-compiled if available, else use hipRTC
-- [ ] Document trade-offs:
-  - ✅ Faster first-run (no compilation)
-  - ✅ Works offline
-  - ❌ Larger package size
-  - ❌ Limited to pre-selected architectures
-
-**Use case**: Production deployments, benchmark suites
-
-#### TODO 4: Reevaluate Project Source Structure 🗂️
-**Priority**: MEDIUM
-**Effort**: 1 session
-
-**Current structure needs clarification**:
-
+**Current Structure**:
 ```
 src/rocmGPUBenches/
- kernels/              # What should go here?
-   ├── gpu-cache.hip     # Full original benchmark (not used)
-   └── ...               # Other hipified benchmarks
- utils/                # ✅ Shared utilities
- gpu_cache_benchmark.{hpp,cpp}  # Individual benchmark classes
- gpu_cache_kernel_source.hpp    # Kernel sources as strings
- hip_rtc_compiler.hpp  # ✅ Runtime compiler
+ framework/          # BenchmarkRunner infrastructure
+   ├── benchmark_runner.hpp
+   ├── benchmark_runner.cpp
+   └── benchmark_runner_bindings.cpp
+ benchmarks/         # Benchmark configurations
+   └── cache_benchmark_config.hpp
+ kernels/            # Kernel implementations
+ cache_kernels.hpp (active)   ├
+   └── *.hip (11 reference files to be converted)
+ hiprtc_utils/       # HIP runtime compilation
+   ├── hip_rtc_compiler.hpp
+   └── hip_rtc_bindings.cpp
+ utils/              # Measurement utilities
+    ├── MeasurementSeries.hpp
+    ├── dtime.hpp
+    ├── gpu-error.h
+    └── rocm-metrics.hpp
 ```
 
-#### TODO 5: Development workflow for new benchmarks
+**Current Working Example**:
+```python
+from rocmGPUBenches import create_cache_benchmark_runner
+runner = create_cache_benchmark_runner()
 
-- Create new benchmark as standalone .hip file
-- Compile/test with amdclang++ for fast iteration
-- Once working, convert to string literal for hipRTC
-- Optional: Script to auto-convert .hip → .hpp string
+# Single run
+result = runner.run('cache', problem_size=256)
+# → bandwidth_gbs: 21695.15, spread: 0.3%
 
-**Questions to answer**:
-- [ ] Should `kernels/` contain:
-  - Option A: Full `.hip` files from gpu-benches (current)
-  - Option B: Cleaned-up kernel-only versions
-  - Option C: Just kernel source string generators (`.hpp` files)
-- [ ] Where should benchmark classes live?
-  - Option A: `benchmarks/` subdirectory
-  - Option B: Root of `src/rocmGPUBenches/`
-- [ ] How to organize for 11 benchmarks?
-  - Option A: One file per benchmark (11 `.cpp` files)
-  - Option B: Group by type (memory, compute, latency)
-
-**Proposal**:
-```
-src/rocmGPUBenches/
- benchmarks/           # NEW: All benchmark implementations
-   ├── base_benchmark.hpp
-   ├── gpu_cache_benchmark.{hpp,cpp}
-   ├── gpu_latency_benchmark.{hpp,cpp}
-   └── ...
- kernels/              # Kernel source generators
-   ├── cache_kernels.hpp
-   ├── latency_kernels.hpp
-   └── ...
- utils/                # Shared utilities
- hip_rtc_compiler.hpp
+# Parameter sweep
+results = runner.sweep('cache', 'problem_size', [128, 256, 512, 1024])
 ```
 
-#### TODO 5: Define Steps to Add New Benchmarks 📝
-**Priority**: HIGH
-**Effort**: Documentation task
+**Test Environment**:
+- **GPU**: AMD Instinct MI325X (gfx942:sramecc+:xnack-)
+- **Compute Units**: 304
+- **ROCm**: 6.4.1
+- **Python**: 3.12 in conda environment `rocm-gpubench-env`
+- **Build**: scikit-build-core + CMake, g++ for host, hipRTC for kernels
 
-**Goal**: Clear workflow for adding remaining 10 benchmarks
+### 🔄 Current Focus: Visualization & Jupyter Integration
 
-**Checklist for adding a new benchmark**:
-1. [ ] Create kernel source generator: `kernels/<name>_kernels.hpp`
-   - Define kernel as raw string literal
-   - Add helper function: `get_<name>_kernel_source()`
-2. [ ] Create benchmark class: `benchmarks/<name>_benchmark.{hpp,cpp}`
-   - Inherit from `GPUBenchmark` base class
-   - Implement required virtual methods
-   - Add result struct
-3. [ ] Create pybind11 bindings: `benchmarks/<name>_bindings.cpp`
-   - Expose class to Python
-   - Add to module registration in `rocmGPUBenches.cpp`
-4. [ ] Update CMakeLists.txt:
-   - Add new `.cpp` files to `pybind11_add_module()`
-   - No other changes needed!
-5. [ ] Update `__init__.py`:
-   - Import new benchmark class
-   - Add to `__all__`
-6. [ ] Test:
-   - Create `test_<name>.py`
-   - Verify compilation and execution
+We have a solid foundation with the generic framework. Now we need to:
+1. Visualize benchmark results
+2. Create interactive Jupyter notebooks
+3. Add more benchmarks using the established pattern
 
-**Key insight**: With the runtime compilation approach, **no CMake/build changes needed for kernels**, only for C++ source files!
+---
 
-**Priority**: MEDIUM  #### TODO 6: Benchmark Results Storage & Visualization
-**Effort**: 2-3 sessions
+## 📋 Active TODOs
 
-**Current state**: Results exist only in memory during benchmark run
+### TODO 3: Integrate Visualization (NEXT UP)
+**Priority**: HIGH  
+**Effort**: 1 session  
+**Status**: Not started
 
-**Requirements**:
-- [ ] Persistent storage for historical comparisons
-- [ ] Query results by GPU, date, benchmark type
-- [ ] Export for visualization tools
+**Goal**: Port plotting functionality from gpu-benches and adapt for BenchmarkRunner results
 
-**Proposed solution: SQLite database**
+**Plan**:
+1. Create `src/rocmGPUBenches/visualization/` module
+2. Port gpu-benches cache plotter (`/devel/gpu-benches/gpu-cache/plot.py`)
+3. Adapt to work with `BenchmarkResult` objects instead of CSV files
+4. Create unified plotting API
+5. Test with cache benchmark sweep results
+
+**Structure**:
+```python
+src/rocmGPUBenches/visualization/
+ __init__.py
+ plot_cache.py       # Cache bandwidth vs size
+ plot_latency.py     # (future)
+ common.py           # Shared plotting utilities
+```
+
+**API Design**:
+```python
+from rocmGPUBenches import create_cache_benchmark_runner
+from rocmGPUBenches.visualization import plot_cache
+
+runner = create_cache_benchmark_runner()
+results = runner.sweep('cache', 'problem_size', [64, 128, 256, 512])
+plot_cache(results, save='cache_sweep.png', show=True)
+```
+
+**Deliverable**: Working `plot_cache()` function that generates bandwidth plots
+
+---
+
+### TODO 4: Create Jupyter Notebook Demo
+**Priority**: HIGH  
+**Effort**: 1 session  
+**Status**: Not started  
+**Dependencies**: TODO 3 (visualization)
+
+**Goal**: End-to-end interactive notebook demonstrating cache benchmark
+
+**Content Outline**:
+```
+1. Introduction
+   - What is cache benchmark
+   - Why it matters for GPU performance
+   
+2. Setup & Environment
+   - Import rocmGPUBenches
+   - Check GPU info (device name, CUs, architecture)
+   
+3. Single Benchmark Run
+   - Run with default parameters
+   - Display result (bandwidth, spread)
+   
+4. Parameter Sweep: Problem Size
+   - Sweep problem_size: [64, 128, 256, 512, 1024]
+   - Plot bandwidth vs problem size
+   - Identify performance characteristics
+   
+5. Parameter Sweep: Block Size
+   - Compare block_size: [256, 512, 1024]
+   - Find optimal configuration
+   
+6. Performance Analysis
+   - Compare with theoretical peak bandwidth
+   - Analyze cache hierarchy effects
+   - Discuss performance implications
+```
+
+**Location**: `notebooks/cache_benchmark_demo.ipynb`
+
+**Deliverable**: Runnable Jupyter notebook with rich output and visualizations
+
+---
+
+### TODO 5: Add More Benchmarks (2-3 examples)
+**Priority**: MEDIUM  
+**Effort**: 2 sessions (1 per benchmark + 1 for polish)  
+**Status**: Not started
+
+**Goal**: Validate framework generality by adding different benchmark types
+
+**Candidates** (in order of simplicity):
+
+1. **GPU Latency** (Simplest - good test)
+   - Measures memory access latency
+   - Single kernel, different metrics than cache
+   - Files: `kernels/latency_kernels.hpp`, `benchmarks/latency_benchmark_config.hpp`
+   - Metric: latency in nanoseconds
+   
+2. **GPU Stream** (Different pattern)
+   - Tests sustained memory bandwidth
+   - Multiple arrays (copy, scale, add, triad)
+   - Different memory access pattern than cache
+   - Metric: bandwidth GB/s
+   
+3. **GPU L2 Cache** (Related to cache)
+   - Extends cache benchmark
+   - Tests L2 cache specifically
+   - Similar to cache but different working set sizes
+
+**Per Benchmark Checklist**:
+- [ ] Create `kernels/<name>_kernels.hpp` with kernel source
+- [ ] Create `benchmarks/<name>_benchmark_config.hpp` with BenchmarkConfig
+- [ ] Add `create_<name>_benchmark_runner()` to `framework/benchmark_runner_bindings.cpp`
+- [ ] Create `visualization/plot_<name>.py`
+- [ ] Create `notebooks/<name>_demo.ipynb`
+- [ ] Add to `__init__.py` exports
+- [ ] Test run, sweep, and plot
+
+**Deliverable**: 3-4 total working benchmarks (cache + 2-3 new)
+
+---
+
+## 📋 Future TODOs
+
+### TODO 6: Persistent Result Storage
+**Priority**: MEDIUM  
+**Effort**: 1-2 sessions  
+**Status**: Not started
+
+**Current Problem**: Results only exist in memory during benchmark run
+
+**Proposed Solution: SQLite database**
 
 ```sql
 CREATE TABLE benchmarks (
@@ -248,183 +241,218 @@ CREATE TABLE benchmarks (
     gpu_name TEXT,
     gpu_arch TEXT,
     benchmark_type TEXT,  -- 'cache', 'latency', etc.
-    parameters JSON,      -- {N: 256, blockSize: 256, ...}
-    results JSON,         -- {exec_time_ms: 23.5, bandwidth_gbs: 414, ...}
+    parameters JSON,      -- {problem_size: 256, block_size: 256, ...}
+    results JSON,         -- {bandwidth_gbs: 21695.15, spread_percent: 0.3, ...}
     rocm_version TEXT
 );
 ```
 
 **Implementation**:
 - [ ] Create `BenchmarkDB` class
-- [ ] Add `save_result()` method to base benchmark class
-- [ ] Create query API: `db.get_results(gpu='MI325X', benchmark='cache')`
-- [ ] Add CLI: `rocmgpubench history --benchmark cache`
-- [ ] Export functions: `export_csv()`, `export_json()`
+- [ ] Add `save_result()` method to BenchmarkRunner
+- [ ] Query API: `db.get_results(gpu='MI325X', benchmark='cache')`
+- [ ] CLI: `rocmgpubench history --benchmark cache`
+- [ ] Export: `export_csv()`, `export_json()`
 
-**Visualization**:
-- [ ] matplotlib plots: bandwidth vs. data size
-- [ ] Compare across GPUs
-- [ ] Interactive: plotly/bokeh
-- [ ] Integration with Jupyter notebooks
+**Use Cases**:
+- Historical comparison
+- Performance regression tracking
+- Cross-GPU comparison
+- Sharing results
 
-### 📋 Additional TODOs
+**Deliverable**: Automatic result persistence with query/export functionality
 
-#### TODO 7: Testing Infrastructure 🧪
-**Priority**: HIGH
-**Effort**: 2 sessions
+---
+
+### TODO 7: Testing Infrastructure
+**Priority**: MEDIUM  
+**Effort**: 2 sessions  
+**Status**: Not started
 
 - [ ] Add pytest framework
-- [ ] Unit tests for `HipRTCCompiler`
+- [ ] Unit tests for BenchmarkRunner
+- [ ] Unit tests for HipRTCCompiler
 - [ ] Integration tests for each benchmark
 - [ ] CI/CD with GitHub Actions
 - [ ] Test on multiple ROCm versions
+- [ ] Performance regression tests
 
-#### TODO 8: Documentation 📚
-**Priority**: MEDIUM
-**Effort**: 2-3 sessions
+**Deliverable**: Automated testing with >80% coverage
+
+---
+
+### TODO 8: Complete Remaining Benchmarks
+**Priority**: LOW  
+**Effort**: 4-6 sessions  
+**Status**: Not started (1/11 complete)
+
+**Remaining Benchmarks**:
+- [ ] gpu-latency (simple)
+- [ ] gpu-stream (medium)
+- [ ] gpu-l2-cache (medium)
+- [ ] gpu-l2-stream (medium)
+- [ ] gpu-roofline (complex)
+- [ ] gpu-small-kernels (medium)
+- [ ] gpu-strides (medium)
+- [ ] cuda-incore (simple)
+- [ ] cuda-memcpy (simple)
+- [ ] um-stream (medium)
+
+**Strategy**: Follow established pattern from TODO 5
+
+---
+
+### TODO 9: YAML Configuration (Optional)
+**Priority**: LOW  
+**Effort**: 2-3 sessions  
+**Status**: Deferred
+
+**Current State**: Benchmark configs are C++ code with lambdas - works well!
+
+**YAML Proposal**: Would allow non-programmers to add benchmarks
+```yaml
+name: cache
+kernel: kernels/cache_kernels.hpp
+default_params:
+  problem_size: 256
+  block_size: 256
+```
+
+**Analysis**:
+- **Pros**: Easier to modify, clean separation
+- **Cons**: Loss of type safety, C++ lambdas are very powerful, harder to debug
+- **Decision**: Wait until we have 5-10 benchmarks, then reassess if there's repetitive boilerplate
+
+**Alternative**: Python helper to generate C++ configs from templates
+
+---
+
+### TODO 10: Documentation
+**Priority**: MEDIUM  
+**Effort**: 2-3 sessions  
+**Status**: Not started
 
 - [ ] API documentation with Sphinx
 - [ ] Installation guide
-- [ ] Tutorial notebooks
+- [ ] Tutorial notebooks (beyond demos)
 - [ ] Performance analysis guide
 - [ ] Contributing guidelines
+- [ ] Architecture documentation
 
-#### TODO 9: Packaging & Distribution 📦
-**Priority**: LOW
-**Effort**: 1-2 sessions
+---
+
+### TODO 11: Packaging & Distribution
+**Priority**: LOW  
+**Effort**: 1-2 sessions  
+**Status**: Not started
 
 - [ ] Prepare for PyPI
 - [ ] Add version management
 - [ ] Create release workflow
 - [ ] Docker container with ROCm
 
-### 🎯 Phase 5: Benchmark API Design (Next Up)
+---
 
-**Goal**: Implement generic framework and add more benchmarks
+## 🎯 Recommended Roadmap
 
-1. Implement `GPUBenchmark` base class (TODO 1)
-2. Optimize kernel compilation (TODO 2)
-3. Refactor `GPUCacheBenchmark` to use base class
-4. Add 2-3 more benchmarks as proof of concept:
-   - GPU Latency (simple, good test case)
-   - GPU Stream (different pattern)
-   - GPU Roofline (complex)
+### Near-Term (Next 5-6 sessions)
+1. **Session 1**: Visualization (TODO 3) - Port plotter, adapt to BenchmarkResult
+2. **Session 2**: Jupyter Notebook (TODO 4) - End-to-end cache demo
+3. **Session 3**: Add GPU Latency benchmark (TODO 5) - Validate framework
+4. **Session 4**: Add GPU Stream benchmark (TODO 5) - Different pattern
+5. **Session 5-6**: Result Storage (TODO 6) - Persistent data & queries
 
-**Estimated effort**: 4-5 sessions
+**Goal**: Solid foundation with 3-4 benchmarks, visualization, and notebooks
 
-### 🎨 Phase 6: Visualization & Analysis (Future)
+### Mid-Term (7-10 sessions)
+- Testing infrastructure (TODO 7)
+- Add 3-4 more benchmarks (TODO 8)
+- Documentation (TODO 10)
 
-**Goal**: Create compelling visualizations
+### Long-Term (10+ sessions)
+- Complete all 11 benchmarks (TODO 8)
+- Advanced features (YAML configs, multi-GPU, etc.)
+- Distribution (TODO 11)
 
-1. Implement SQLite storage (TODO 6)
-2. Create plotting utilities
-3. Generate comparison charts
-4. Interactive dashboards
+---
 
-**Estimated effort**: 3-4 sessions
+## 📊 Progress Summary
 
-### 📓 Phase 7: Jupyter Integration (Future)
+| Phase | Status | Sessions | Completed |
+|-------|--------|----------|-----------|
+| **Phase 1-4: Foundation** | ✅ Complete | ~8 | Oct 16, 2025 |
+| **Phase 5: Generic Framework** | ✅ Complete | 4 | Oct 16, 2025 |
+| **TODO 3: Visualization** | 🔄 Next | 1 | - |
+| **TODO 4: Jupyter** | ⏳ Pending | 1 | - |
+| **TODO 5: More Benchmarks** | ⏳ Pending | 2 | - |
+| **TODO 6: Storage** | ⏳ Pending | 1-2 | - |
+| **TODO 7: Testing** | ⏳ Pending | 2 | - |
+| **TODO 8: All Benchmarks** | ⏳ Pending | 4-6 | 1/11 done |
+| **TODO 9: YAML (optional)** | ⏸️ Deferred | 2-3 | - |
+| **TODO 10: Docs** | ⏳ Pending | 2-3 | - |
+| **TODO 11: Packaging** | ⏳ Pending | 1-2 | - |
 
-**Goal**: Interactive exploration
+**Total Completed**: ~12 sessions  
+**Estimated Remaining**: ~20-25 sessions  
+**Current Benchmark Count**: 1/11 (9%)
 
-1. Create example notebooks
-2. Add magic commands
-3. Live performance monitoring
-4. Tutorial content
+---
 
-**Estimated effort**: 2-3 sessions
+## 🎯 Immediate Next Steps
 
-### ✅ Phase 8: Testing & CI (Future)
+### Decision on Next Focus
 
-**Goal**: Ensure reliability
+**Question A**: YAML configs?
+- **Answer**: ❌ Not now. C++ configs work well, lambdas are powerful. Revisit after 5-10 benchmarks.
 
-1. Implement TODO 7
-2. Set up CI/CD
-3. Performance regression tests
+**Question B**: Integrate plotter?
+- **Answer**: ✅ Yes! Do this next (TODO 3). 1 session, high value, unblocks Jupyter.
 
-**Estimated effort**: 2-3 sessions
+**Question C**: Jupyter notebook?
+- **Answer**: ✅ Yes! After plotter (TODO 4). 1 session, validates everything end-to-end.
 
-### 📖 Phase 9: Documentation (Future)
+### Recommended Immediate Order:
+1. ✅ **Visualization (TODO 3)** - 1 session - HIGH priority
+2. ✅ **Jupyter Notebook (TODO 4)** - 1 session - HIGH priority
+3. ⬜ **GPU Latency (TODO 5)** - 1 session - Validates framework
+4. ⬜ **GPU Stream (TODO 5)** - 1 session - Different pattern
+5. ⬜ **Result Storage (TODO 6)** - 1-2 sessions - Useful with multiple benchmarks
 
-**Goal**: Make it accessible
+**Rationale**:
+- Visualization is the bottleneck - we have working benchmarks but can't see results well
+- Jupyter validates the entire stack and serves as living documentation
+- 2-3 more benchmarks prove the framework's generality
+- Storage becomes valuable once we have multiple benchmarks generating data
+- This order gives quick wins and steady progress
 
-1. Complete TODO 8
-2. Video tutorials
-3. Blog posts
+---
 
-**Estimated effort**: 2-3 sessions
+## 💡 Key Insights & Decisions
 
-## Notes for Future AI Agents
+### Architecture Decisions
+1. **Runtime Compilation Only**: No HIP device code at build time, all via hipRTC
+2. **Configuration-Based Framework**: BenchmarkConfig with flexible ParamMap
+3. **C++ for Performance**: Infrastructure in C++ with Python bindings via pybind11
+4. **Separation of Concerns**: framework/ (HOW), benchmarks/ (WHAT), kernels/ (CODE)
 
-### Architecture Decisions Made
+### What's Working Well
+- BenchmarkRunner abstraction is clean and extensible
+- Runtime parameters avoid template explosion
+- Python API is intuitive with kwargs
+- Single kernel compilation is fast (0.27s)
 
-1. **Runtime Compilation Only**: No HIP device code compiled at build time
-   - All kernels compiled via hipRTC at runtime
-   - CMakeLists.txt only links HIP runtime + hipRTC libraries
-   - Build uses g++ for pure C++ host code
-
-2. **Kernel Storage**: Kernels as C++ string literals in header files
-   - Easy to read and modify
-   - No file I/O at runtime
-   - Example: `gpu_cache_kernel_source.hpp`
-
-3. **Caching Strategy**: In-memory kernel cache per session
-   - Key: kernel configuration (needs optimization!)
-   - Future: Add disk-based cache
-
-4. **Python Bindings**: pybind11 for C++ ↔ Python interface
-   - Clean, type-safe API
-   - Result structs exposed as Python classes
-
-### Development Workflow
-
-```bash
-# Activate environment
-micromamba activate rocm-gpubench-env
-
-# Build and install
-cd /devel/rocmGpubenches
-pip install -e . --no-build-isolation
-
-# Test
-python -c "from rocmGPUBenches import GPUCacheBenchmark; bench = GPUCacheBenchmark(); print(bench.run(256, 256, 5))"
-
-# Check GPU
-rocminfo | grep gfx
-
-# Commit
-git add -A && git commit -m "Your message" && git push
-```
-
-### Current Test Results
-
-**GPU**: AMD Instinct MI325X (gfx942)
-**Compute Units**: 304
-**Test**: GPUCacheBenchmark, N=256, blockSize=256, 5 iterations
-**Result**:
-- Execution Time: 23.488 ms
-- Bandwidth: 414,499 GB/s (414 TB/s!)
-- Spread: 3.57%
+### Lessons Learned
+- C++ lambdas in configs are more powerful than YAML would be
+- Repository organization matters - clear naming improves intuition
+- Generic framework was worth the investment - adding benchmarks is now straightforward
+- Visualization and Jupyter should have come earlier in the plan
 
 ### Known Issues
+- Benchmarks run slowly (15 iterations default) - could add quick mode
+- No result persistence yet - data lost after run
+- Only 1 of 11 benchmarks implemented
 
-1. **Slow sweep tests**: Each new N value requires kernel recompilation
-   - **Fix**: TODO 2 (use runtime parameters)
-2. **Terminal hangs**: Python process hangs on larger sweeps
-   - Likely due to excessive compilation time
-   - **Fix**: TODO 2
-3. **No result persistence**: Results lost after run
-   - **Fix**: TODO 6 (SQLite storage)
-
-## Timeline Estimate
-
-- ✅ **Phase 1-4** (Setup through First Benchmark): Complete!
-- **TODO 1-2** (Generalize & Optimize): 3-4 sessions
-- **TODO 3-5** (Structure & Process): 3-4 sessions
-- **TODO 6** (Storage & Viz): 2-3 sessions
-- **Phase 7-9** (Jupyter, Testing, Docs): 8-10 sessions
-
-**Total Remaining**: ~16-21 work sessions
+---
 
 ## Success Criteria
 
@@ -432,27 +460,21 @@ The project will be considered successful when:
 
 1. ✅ All CUDA benchmarks converted to HIP
 2. ✅ hipRTC integration working
-3. ✅ Can run at least 1 benchmark end-to-end from Python (GPUCache working!)
-4. ⬜ Generic framework supports all 11 benchmarks
+3. ✅ Can run at least 1 benchmark end-to-end from Python
+4. ✅ Generic framework supports pluggable benchmarks
 5. ⬜ Visualizations match quality of original gpu-benches
-6. ⬜ Example Jupyter notebooks demonstrate all features
-7. ⬜ Documentation covers installation and usage
-8. ⬜ CI/CD pipeline ensures builds work
+6. ⬜ Example Jupyter notebooks demonstrate key features
+7. ⬜ At least 5-6 benchmarks working (50%+)
+8. ⬜ Documentation covers installation and usage
+9. ⬜ CI/CD pipeline ensures builds work
 
-## Maintenance
-
-### Long-term Considerations
-
-- Keep up with ROCm updates
-- Support new GPU architectures as they release
-- Consider supporting multi-GPU benchmarks
-- Potential for performance regression testing
-- Community contributions and issue management
+**Current Score**: 4/9 (44%)
 
 ---
 
-**Last Updated**: October 16, 2025
-**Current Phase**: Phase 5 (Generalizing Benchmark Framework)
-**Current Status**: First benchmark (GPU Cache) working with runtime hipRTC compilation!
-**Next Session Focus**: Optimize kernel compilation (TODO 2), then generalize framework (TODO 1)
+**Last Updated**: October 16, 2025  
+**Current Phase**: Post-Phase 5 - Visualization & Demos  
+**Next Session Focus**: TODO 3 - Integrate visualization from gpu-benches  
+**Repository**: github.com/diptorupd/rocmGPUBenches  
+**Branch**: main (feature/gpu_benchmark_api merged)  
 **Maintainer**: @diptorupd
