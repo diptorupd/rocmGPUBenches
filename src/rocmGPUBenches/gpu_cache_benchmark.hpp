@@ -6,7 +6,7 @@
 #include "hip_rtc_compiler.hpp"
 #include "utils/MeasurementSeries.hpp"
 #include "utils/gpu-error.h"
-#include "gpu_cache_kernel_source.hpp"
+#include "kernels/cache_kernels.hpp"
 
 namespace rocmgpubenches {
 

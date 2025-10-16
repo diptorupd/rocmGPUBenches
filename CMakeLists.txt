@@ -1,11 +1,15 @@
 cmake_minimum_required(VERSION 3.21)
-
-# Work around old hiprtc CMake config
-set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
-
 project(rocmGPUBenches LANGUAGES CXX)
 
-# Find HIP
+# Set C++ standard
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Find dependencies
+find_package(Python REQUIRED COMPONENTS Interpreter Development)
+find_package(pybind11 CONFIG REQUIRED)
+
+# Get HIP installation path
 if(NOT DEFINED HIP_PATH)
     if(NOT DEFINED ENV{HIP_PATH})
         set(HIP_PATH "/opt/rocm" CACHE PATH "Path to HIP installation")
@@ -14,35 +18,34 @@ if(NOT DEFINED HIP_PATH)
     endif()
 endif()
 
-list(APPEND CMAKE_PREFIX_PATH ${HIP_PATH})
-
-# Find HIP (for runtime library only)
-find_package(hip REQUIRED)
-
-# Find pybind11
-find_package(pybind11 CONFIG REQUIRED)
-
-# Create the Python extension module (pure C++ - no device code)
+# Create the Python module
 pybind11_add_module(rocmGPUBenches 
-    src/rocmGPUBenches/rocmGPUBenches.cpp
     src/rocmGPUBenches/main.cpp
+    src/rocmGPUBenches/rocmGPUBenches.cpp
     src/rocmGPUBenches/hip_rtc_bindings.cpp
-    src/rocmGPUBenches/gpu_cache_bindings.cpp
     src/rocmGPUBenches/gpu_cache_benchmark.cpp
+    src/rocmGPUBenches/gpu_cache_bindings.cpp
+    src/rocmGPUBenches/benchmarks/benchmark_runner.cpp
+    src/rocmGPUBenches/benchmarks/benchmark_runner_bindings.cpp
 )
 
-# Link against HIP runtime and hipRTC (host libraries only)
-target_link_libraries(rocmGPUBenches PRIVATE hip::host)
-target_link_libraries(rocmGPUBenches PRIVATE ${HIP_PATH}/lib/libhiprtc.so)
-
-# Add include directories
+# Include directories
 target_include_directories(rocmGPUBenches PRIVATE 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/rocmGPUBenches
     ${HIP_PATH}/include
 )
 
-# Set C++ standard
-target_compile_features(rocmGPUBenches PRIVATE cxx_std_17)
+# Link libraries directly
+target_link_libraries(rocmGPUBenches PRIVATE 
+    ${HIP_PATH}/lib/libamdhip64.so
+    ${HIP_PATH}/lib/libhiprtc.so
+)
 
-# Install the module to the correct location
-install(TARGETS rocmGPUBenches LIBRARY DESTINATION rocmGPUBenches)
+# Set compile definitions
+target_compile_definitions(rocmGPUBenches PRIVATE 
+    USE_PROF_API=1
+    __HIP_PLATFORM_AMD__=1
+)
+
+# Installation
+install(TARGETS rocmGPUBenches LIBRARY DESTINATION .)
