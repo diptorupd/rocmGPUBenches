@@ -18,10 +18,12 @@ Based on the [gpu-benches](https://github.com/te42kyfo/gpu-benches) project, foc
 ### System Requirements
 
 **Hardware**:
+
 - AMD GPU with ROCm support (tested on MI325X, MI300X, MI210)
 - Recommended: 16GB+ system RAM for compilation
 
 **Software**:
+
 - ROCm 6.0+ (tested with ROCm 6.4.1)
 - Python 3.10+ (tested with Python 3.12)
 - C++ compiler with C++17 support (g++ 9.0+)
@@ -30,6 +32,7 @@ Based on the [gpu-benches](https://github.com/te42kyfo/gpu-benches) project, foc
 ### ROCm Installation
 
 If ROCm is not installed, follow AMD's official guide:
+
 ```bash
 # Ubuntu/Debian
 # See: https://rocm.docs.amd.com/en/latest/deploy/linux/quick_start.html
@@ -46,15 +49,18 @@ rocm-smi
 The package requires the following Python packages (automatically installed):
 
 **Build Dependencies** (required for installation):
+
 - `scikit-build-core[pyproject]` - Build system
 - `pybind11` - Python/C++ bindings
 
 **Runtime Dependencies** (required to run benchmarks):
+
 - `pandas >= 2.0.0` - Data manipulation and storage
 - `matplotlib >= 3.7.0` - Visualization
 - `numpy >= 1.24.0` - Numerical operations
 
 **Optional Dependencies** (recommended):
+
 - `jupyter` - For interactive notebooks
 - `seaborn` - Enhanced plotting styles
 - `ipywidgets` - Interactive notebook widgets
@@ -73,7 +79,7 @@ micromamba create -n rocm-bench python=3.12
 micromamba activate rocm-bench
 
 # Install dependencies
-micromamba install pandas matplotlib numpy
+micromamba install pandas matplotlib numpy scikit-build-core cmake ninja pybind11
 # Or using pip:
 # pip install pandas matplotlib numpy
 
@@ -106,6 +112,7 @@ pip install -e . --no-build-isolation
 ### Troubleshooting Installation
 
 **Issue**: `hipRTC.h not found`
+
 ```bash
 # Ensure ROCm is in your path
 export ROCM_PATH=/opt/rocm
@@ -114,18 +121,21 @@ export LD_LIBRARY_PATH=$ROCM_PATH/lib:$LD_LIBRARY_PATH
 ```
 
 **Issue**: `ImportError: cannot import name 'create_cache_benchmark_runner'`
+
 ```bash
 # Rebuild the C++ extension
 pip install -e . --no-build-isolation --force-reinstall --no-deps
 ```
 
 **Issue**: `ModuleNotFoundError: No module named 'pandas'`
+
 ```bash
 # Install missing runtime dependencies
 pip install pandas matplotlib numpy
 ```
 
 **Issue**: Build fails with "hip/hip_runtime.h: No such file or directory"
+
 ```bash
 # Install ROCm development packages
 sudo apt-get install rocm-dev rocm-libs
@@ -167,6 +177,7 @@ print("\n✅ All systems operational!")
 ## Quick Start
 
 ### Running a Single Benchmark
+
 ```python
 from rocmGPUBenches import create_cache_benchmark_runner
 
@@ -178,6 +189,7 @@ print(f"{result.primary_metric:.2f} {result.metric_name}")
 ```
 
 ### Complete Workflow: Run → Store → Visualize
+
 ```python
 from rocmGPUBenches import (
     BenchmarkDB,
@@ -208,7 +220,17 @@ plot_gpu_comparison_sweep(df, xscale='log2',
 ```
 
 ### Multi-GPU Comparison
+
 ```python
+from rocmGPUBenches import (
+    BenchmarkDB,
+    create_cache_benchmark_runner,
+    plot_gpu_comparison_sweep
+)
+
+sizes = [128, 256, 512, 1024, 2048]
+db = BenchmarkDB('results.db')
+
 # Run on GPU 1
 runner1 = create_cache_benchmark_runner()
 for size in sizes:
@@ -246,7 +268,7 @@ plot_gpu_comparison_sweep(df_all, title='MI325X vs MI300X')
 
 ## Project Structure
 
-```
+```text
 rocmGPUBenches/
  src/rocmGPUBenches/
    ├── framework/          # BenchmarkRunner infrastructure
@@ -268,7 +290,8 @@ GPLv3 - Matching the original [gpu-benches](https://github.com/te42kyfo/gpu-benc
 ## Citation
 
 If you use this tool in your research, please cite the original gpu-benches project:
-```
+
+```bibtex
 @misc{gpu-benches,
   author = {Huthmann, Jens},
   title = {GPU Microbenchmarks},
