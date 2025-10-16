@@ -1,53 +1,53 @@
-"""ROCm GPU Benchmarks with hipRTC support."""
+"""
+rocmGPUBenches: GPU Benchmarking Framework for AMD ROCm
+"""
 
-import warnings
+import _rocmGPUBenches
 
-# Import C++ extension (compiled module in site-packages)
-try:
-    import _rocmGPUBenches
-    hello = _rocmGPUBenches.hello if hasattr(_rocmGPUBenches, 'hello') else None
-    HipRTCCompiler = _rocmGPUBenches.HipRTCCompiler
-    GPUCacheBenchmark = _rocmGPUBenches.GPUCacheBenchmark if hasattr(_rocmGPUBenches, 'GPUCacheBenchmark') else None
-    BenchmarkRunner = _rocmGPUBenches.BenchmarkRunner
-    BenchmarkResult = _rocmGPUBenches.BenchmarkResult
-    create_cache_benchmark_runner = _rocmGPUBenches.create_cache_benchmark_runner
-    create_latency_benchmark_runner = _rocmGPUBenches.create_latency_benchmark_runner
-    _cpp_extensions_available = True
-except ImportError as e:
-    warnings.warn(f"C++ extension not available: {e}")
-    _cpp_extensions_available = False
+# Core benchmark framework
+BenchmarkRunner = _rocmGPUBenches.BenchmarkRunner
+BenchmarkResult = _rocmGPUBenches.BenchmarkResult
 
-# Python modules (always available)
-from .storage import BenchmarkDB
+# Benchmark factory functions
+create_cache_benchmark_runner = _rocmGPUBenches.create_cache_benchmark_runner
+create_latency_benchmark_runner = _rocmGPUBenches.create_latency_benchmark_runner
+create_stream_benchmark_runner = _rocmGPUBenches.create_stream_benchmark_runner
+
+# HipRTC compiler utilities
+HipRTCCompiler = _rocmGPUBenches.HipRTCCompiler
+
+# Storage module
+from .storage.benchmark_db import BenchmarkDB
+
+# Visualization module
 from .visualization import (
-    plot_sweep, 
-    plot_comparison, 
-    plot_heatmap, 
+    plot_sweep,
+    plot_comparison,
+    plot_heatmap,
     plot_gpu_comparison_sweep,
-    format_data_size_axis,
-    setup_style
+    format_data_size_axis
 )
 
-# Build __all__ dynamically
 __all__ = [
+    # Core framework
+    'BenchmarkRunner',
+    'BenchmarkResult',
+    'HipRTCCompiler',
+    
+    # Benchmark factories
+    'create_cache_benchmark_runner',
+    'create_latency_benchmark_runner',
+    'create_stream_benchmark_runner',
+    
+    # Storage
     'BenchmarkDB',
+    
+    # Visualization
     'plot_sweep',
     'plot_comparison',
     'plot_heatmap',
     'plot_gpu_comparison_sweep',
     'format_data_size_axis',
-    'setup_style'
 ]
 
-if _cpp_extensions_available:
-    __all__.extend([
-        'hello',
-        'HipRTCCompiler', 
-        'GPUCacheBenchmark',
-        'BenchmarkRunner',
-        'BenchmarkResult',
-        'create_cache_benchmark_runner',
-        'create_latency_benchmark_runner'
-    ])
-
-__version__ = "0.0.1"
+__version__ = '0.0.1'
