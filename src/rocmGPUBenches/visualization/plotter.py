@@ -348,3 +348,94 @@ def plot_heatmap(
         plt.show()
     
     return fig
+
+
+def format_data_size_axis(ax, unit='auto', base_unit_bytes=4):
+    """
+    Format axis to show data sizes in KB/MB with smart labels.
+    
+    Args:
+        ax: Matplotlib axis object
+        unit: 'KB', 'MB', or 'auto' for automatic selection
+        base_unit_bytes: Bytes per element (default: 4 for float32)
+    
+    Example:
+        >>> fig, ax = plt.subplots()
+        >>> ax.plot(problem_sizes, bandwidths)
+        >>> format_data_size_axis(ax)
+    """
+    import matplotlib.ticker as ticker
+    
+    def size_formatter(x, pos):
+        """Convert element count to KB/MB"""
+        kb = (x * base_unit_bytes) / 1024
+        if kb < 1024:
+            return f"{kb:g} KB"
+        else:
+            return f"{kb/1024:g} MB"
+    
+    ax.xaxis.set_major_formatter(ticker.FuncFormatter(size_formatter))
+    return ax
+
+
+def plot_gpu_comparison_sweep(
+    df: pd.DataFrame,
+    x: str = 'problem_size',
+    y: str = 'primary_metric',
+    title: Optional[str] = None,
+    element_size_bytes: int = 4,
+    figsize: tuple = (12, 7),
+    save_path: Optional[Union[str, Path]] = None,
+    show: bool = True,
+    **kwargs
+) -> matplotlib.figure.Figure:
+    """
+    Plot parameter sweep comparison across multiple GPUs.
+    Convenience wrapper around plot_sweep with gpu_name grouping.
+    
+    Args:
+        df: DataFrame with results from multiple GPUs
+        x: Parameter column (default: 'problem_size')
+        y: Metric column (default: 'primary_metric')  
+        title: Plot title
+        element_size_bytes: Bytes per element for size formatting (default: 4 for float32)
+        figsize: Figure size (default: (12, 7))
+        save_path: Path to save figure
+        show: Whether to display plot
+        **kwargs: Additional arguments for plot_sweep()
+    
+    Returns:
+        matplotlib Figure object
+    
+    Example:
+        >>> # Results from MI325X, MI300X, H100
+        >>> df = db.query(benchmark='cache')
+        >>> plot_gpu_comparison_sweep(df, x='problem_size', y='primary_metric')
+    """
+    if 'gpu_name' not in df.columns:
+        raise ValueError("DataFrame must have 'gpu_name' column for GPU comparison")
+    
+    # Use plot_sweep with gpu_name grouping
+    fig = plot_sweep(
+        df,
+        x=x,
+        y=y,
+        group_by='gpu_name',
+        title=title or 'GPU Performance Comparison',
+        xlabel=f'Data Volume per CU/SM (elements)',
+        figsize=figsize,
+        save_path=save_path,
+        show=show,
+        **kwargs
+    )
+    
+    # Format x-axis to show KB/MB
+    ax = fig.axes[0]
+    format_data_size_axis(ax, base_unit_bytes=element_size_bytes)
+    ax.set_xlabel('Data Volume per CU/SM')
+    
+    if save_path and not show:
+        # Re-save with updated formatting
+        fig.savefig(save_path, bbox_inches='tight')
+    
+    return fig
