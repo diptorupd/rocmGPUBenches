@@ -3,6 +3,7 @@
 #include "benchmark_runner.hpp"
 #include "../benchmarks/cache_benchmark_config.hpp"
 #include "../benchmarks/latency_benchmark_config.hpp"
+#include "../benchmarks/stream_benchmark_config.hpp"
 
 namespace py = pybind11;
 using namespace rocmgpubenches;
@@ -91,4 +92,11 @@ void init_benchmark_runner(py::module_& m) {
         runner->register_benchmark(get_latency_benchmark_config());
         return runner;
     }, "Create a BenchmarkRunner configured for the latency benchmark");
+
+    // Factory function for stream benchmark
+    m.def("create_stream_benchmark_runner", []() {
+        auto runner = std::make_shared<BenchmarkRunner>();
+        runner->register_benchmark(get_stream_benchmark_config());
+        return runner;
+    }, "Create a BenchmarkRunner configured for the STREAM benchmark");
 }
