@@ -92,7 +92,7 @@ The GPU cache benchmark is working, but we need to:
 ### 📋 TODO: Critical Next Steps
 
 #### TODO 1: Generic GPUBenchmark Base Class API 🎯
-**Priority**: HIGH  
+**Priority**: HIGH
 **Effort**: 2-3 sessions
 
 **Goal**: Make GPUCacheBenchmark into a generic framework
@@ -109,7 +109,7 @@ The GPU cache benchmark is working, but we need to:
 **Benefits**: All 11 benchmarks can plug into common framework
 
 #### TODO 2: Optimize Kernel Compilation Strategy 🚀
-**Priority**: HIGH  
+**Priority**: HIGH
 **Effort**: 1-2 sessions
 
 **Current Issue**: We generate unique kernel for each (N, iters, blockSize) combination, causing 15+ compilations per sweep
@@ -130,7 +130,7 @@ The GPU cache benchmark is working, but we need to:
 **Expected speedup**: 10-15x faster for sweep tests
 
 #### TODO 3: Pre-compilation for Fixed GPU Architectures 📦
-**Priority**: MEDIUM  
+**Priority**: MEDIUM
 **Effort**: 2-3 sessions
 
 **Goal**: Optional AOT (Ahead-of-Time) compilation at package build time
@@ -149,7 +149,7 @@ The GPU cache benchmark is working, but we need to:
 **Use case**: Production deployments, benchmark suites
 
 #### TODO 4: Reevaluate Project Source Structure 🗂️
-**Priority**: MEDIUM  
+**Priority**: MEDIUM
 **Effort**: 1 session
 
 **Current structure needs clarification**:
@@ -164,6 +164,13 @@ src/rocmGPUBenches/
  gpu_cache_kernel_source.hpp    # Kernel sources as strings
  hip_rtc_compiler.hpp  # ✅ Runtime compiler
 ```
+
+#### TODO 5: Development workflow for new benchmarks
+
+- Create new benchmark as standalone .hip file
+- Compile/test with amdclang++ for fast iteration
+- Once working, convert to string literal for hipRTC
+- Optional: Script to auto-convert .hip → .hpp string
 
 **Questions to answer**:
 - [ ] Should `kernels/` contain:
@@ -194,7 +201,7 @@ src/rocmGPUBenches/
 ```
 
 #### TODO 5: Define Steps to Add New Benchmarks 📝
-**Priority**: HIGH  
+**Priority**: HIGH
 **Effort**: Documentation task
 
 **Goal**: Clear workflow for adding remaining 10 benchmarks
@@ -222,7 +229,7 @@ src/rocmGPUBenches/
 
 **Key insight**: With the runtime compilation approach, **no CMake/build changes needed for kernels**, only for C++ source files!
 
-**Priority**: MEDIUM  #### TODO 6: Benchmark Results Storage & Visualization 
+**Priority**: MEDIUM  #### TODO 6: Benchmark Results Storage & Visualization
 **Effort**: 2-3 sessions
 
 **Current state**: Results exist only in memory during benchmark run
@@ -263,7 +270,7 @@ CREATE TABLE benchmarks (
 ### 📋 Additional TODOs
 
 #### TODO 7: Testing Infrastructure 🧪
-**Priority**: HIGH  
+**Priority**: HIGH
 **Effort**: 2 sessions
 
 - [ ] Add pytest framework
@@ -273,7 +280,7 @@ CREATE TABLE benchmarks (
 - [ ] Test on multiple ROCm versions
 
 #### TODO 8: Documentation 📚
-**Priority**: MEDIUM  
+**Priority**: MEDIUM
 **Effort**: 2-3 sessions
 
 - [ ] API documentation with Sphinx
@@ -283,7 +290,7 @@ CREATE TABLE benchmarks (
 - [ ] Contributing guidelines
 
 #### TODO 9: Packaging & Distribution 📦
-**Priority**: LOW  
+**Priority**: LOW
 **Effort**: 1-2 sessions
 
 - [ ] Prepare for PyPI
@@ -391,10 +398,10 @@ git add -A && git commit -m "Your message" && git push
 
 ### Current Test Results
 
-**GPU**: AMD Instinct MI325X (gfx942)  
-**Compute Units**: 304  
-**Test**: GPUCacheBenchmark, N=256, blockSize=256, 5 iterations  
-**Result**: 
+**GPU**: AMD Instinct MI325X (gfx942)
+**Compute Units**: 304
+**Test**: GPUCacheBenchmark, N=256, blockSize=256, 5 iterations
+**Result**:
 - Execution Time: 23.488 ms
 - Bandwidth: 414,499 GB/s (414 TB/s!)
 - Spread: 3.57%
@@ -444,8 +451,8 @@ The project will be considered successful when:
 
 ---
 
-**Last Updated**: October 16, 2025  
-**Current Phase**: Phase 5 (Generalizing Benchmark Framework)  
-**Current Status**: First benchmark (GPU Cache) working with runtime hipRTC compilation!  
-**Next Session Focus**: Optimize kernel compilation (TODO 2), then generalize framework (TODO 1)  
+**Last Updated**: October 16, 2025
+**Current Phase**: Phase 5 (Generalizing Benchmark Framework)
+**Current Status**: First benchmark (GPU Cache) working with runtime hipRTC compilation!
+**Next Session Focus**: Optimize kernel compilation (TODO 2), then generalize framework (TODO 1)
 **Maintainer**: @diptorupd
