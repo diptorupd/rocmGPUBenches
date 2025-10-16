@@ -2,7 +2,7 @@
 #include <pybind11/stl.h>
 #include <pybind11/functional.h>
 #include "benchmark_runner.hpp"
-#include "cache_benchmark_config.hpp"
+#include "../benchmarks/cache_benchmark_config.hpp"
 
 namespace py = pybind11;
 using namespace rocmgpubenches;

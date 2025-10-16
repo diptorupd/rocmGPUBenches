@@ -1,6 +1,6 @@
 #pragma once
 
-#include "benchmark_runner.hpp"
+#include "../framework/benchmark_runner.hpp"
 #include "../kernels/cache_kernels.hpp"
 
 namespace rocmgpubenches {
