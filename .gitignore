@@ -46,3 +46,6 @@ Makefile
 # Temporary files
 *.tmp
 *.bak
+
+# Database files
+*.db
