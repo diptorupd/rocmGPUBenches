@@ -93,11 +93,87 @@ results = runner.sweep('cache', 'problem_size', [128, 256, 512, 1024])
 - **Python**: 3.12 in conda environment `rocm-gpubench-env`
 - **Build**: scikit-build-core + CMake, g++ for host, hipRTC for kernels
 
-### 🔄 Current Focus: Visualization & Jupyter Integration
 
-We have a solid foundation with the generic framework. Now we need to:
-1. Visualize benchmark results
-2. Create interactive Jupyter notebooks
+#### Phase 6: Storage Module ✅ (Oct 16, 2025)
+- [x] **Implemented pandas + SQLite storage backend**
+  - Created `BenchmarkDB` class for persistent result storage
+  - Schema: 15 columns including timestamp, gpu_info, parameters (JSON), metrics
+  - Methods: `save_result()`, `query()`, `get_sweep_data()`, `export_csv/json()`, `stats()`
+  - Flexible querying with filters (benchmark, gpu_name, problem_size, etc.)
+  - Aggregation support for parameter sweeps (mean, std, count)
+  - **Architecture Decision**: Pandas + SQLite (lightweight) vs SQLAlchemy+Alembic (enterprise)
+  - Result: 0.5-1 session effort, perfect for single-user/small-team workflow
+
+#### Phase 7: Visualization Module ✅ (Oct 16, 2025)
+- [x] **Implemented comprehensive visualization suite**
+  - **Core Functions**:
+    * `plot_sweep()` - Parameter sweep line plots with error bars, grouping, log scales
+    * `plot_comparison()` - Bar charts for metric comparison across configurations
+    * `plot_heatmap()` - 2D heatmap for dual-parameter sweeps
+  - **KB/MB Formatting**:
+    * `format_data_size_axis()` - Smart formatter: <1024→KB, ≥1024→MB
+    * Matches gpu-benches style: "data volume per SM/CU"
+    * Supports custom element sizes (float32=4B, float64=8B)
+  - **Multi-GPU Comparison**:
+    * `plot_gpu_comparison_sweep()` - Convenience function for cross-GPU plots
+    * Database schema supports multi-GPU (gpu_name, gpu_arch columns)
+    * `plot_sweep(group_by='gpu_name')` for custom grouping
+  - **Styling**:
+    * Ported GPU color palette from gpu-benches (9 colors)
+    * BMH matplotlib style, export: PNG/SVG/PDF (300 DPI)
+  - **Commits**: feature/visualization branch (ready to merge)
+    * `1255fd2`: Storage module
+    * `fcbc21a`: Visualization functions
+    * `a8acdf2`: KB/MB formatting + multi-GPU
+
+**Module Structure After Phase 6-7**:
+```
+src/rocmGPUBenches/
+ framework/          # BenchmarkRunner infrastructure
+ benchmarks/         # Benchmark configurations
+ kernels/            # Kernel implementations
+ hiprtc_utils/       # HIP runtime compilation
+ utils/              # Measurement utilities
+ storage/            # NEW: Database persistence
+   ├── __init__.py
+   └── benchmark_db.py (300+ lines)
+ visualization/      # NEW: Plotting functions
+    ├── __init__.py
+    └── plotter.py (450+ lines)
+```
+
+**Usage Example**:
+```python
+# Complete workflow: benchmark → storage → visualization
+from rocmGPUBenches import (
+    BenchmarkDB, 
+    create_cache_benchmark_runner,
+    plot_gpu_comparison_sweep
+)
+
+# Run and store
+db = BenchmarkDB('results.db')
+runner = create_cache_benchmark_runner()
+for size in [128, 256, 512, 1024]:
+    result = runner.run('cache', problem_size=size)
+    db.save_result('cache', result, {'problem_size': size}, 
+                   {'name': runner.get_device_name(), 'arch': 'gfx942'})
+
+# Query and visualize
+df = db.query(benchmark='cache')
+plot_gpu_comparison_sweep(df, xscale='log2', 
+                         title='Cache Hierarchy Analysis')
+```
+
+### 🔄 Current Focus: Jupyter Integration & More Benchmarks
+
+**Phase 6-7 COMPLETE!** ✅ Storage + Visualization implemented and tested.
+
+Next priorities:
+1. **TODO 4**: Create Jupyter notebook for end-to-end workflow demo
+2. **TODO 5**: Add 2nd benchmark (GPU Latency or GPU Stream) to validate framework
+3. **TODO 7**: Add basic testing infrastructure
+4. **TODO 8**: Continue adding remaining benchmarks (2/11 → 5/11 target)
 3. Add more benchmarks using the established pattern
 
 ---
@@ -107,7 +183,7 @@ We have a solid foundation with the generic framework. Now we need to:
 ### TODO 3: Integrate Visualization (NEXT UP)
 **Priority**: HIGH  
 **Effort**: 1 session  
-**Status**: Not started
+**Status**: ✅ COMPLETED (Oct 16, 2025)
 
 **Goal**: Port plotting functionality from gpu-benches and adapt for BenchmarkRunner results
 
