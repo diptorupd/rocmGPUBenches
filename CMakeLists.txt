@@ -22,9 +22,7 @@ endif()
 pybind11_add_module(rocmGPUBenches 
     src/rocmGPUBenches/main.cpp
     src/rocmGPUBenches/rocmGPUBenches.cpp
-    src/rocmGPUBenches/hip_rtc_bindings.cpp
-    src/rocmGPUBenches/gpu_cache_benchmark.cpp
-    src/rocmGPUBenches/gpu_cache_bindings.cpp
+    src/rocmGPUBenches/hiprtc_utils/hip_rtc_bindings.cpp
     src/rocmGPUBenches/benchmarks/benchmark_runner.cpp
     src/rocmGPUBenches/benchmarks/benchmark_runner_bindings.cpp
 )

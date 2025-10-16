@@ -4,7 +4,6 @@ namespace py = pybind11;
 
 // Forward declarations
 void bind_hip_rtc(py::module &);
-void bind_gpu_cache_benchmark(py::module &);
 void init_benchmark_runner(py::module_ &);
 
 PYBIND11_MODULE(rocmGPUBenches, m) {
@@ -12,6 +11,5 @@ PYBIND11_MODULE(rocmGPUBenches, m) {
     
     // Register submodules
     bind_hip_rtc(m);
-    bind_gpu_cache_benchmark(m);
     init_benchmark_runner(m);  // New flexible benchmark runner
 }

@@ -9,7 +9,7 @@
 #include <functional>
 #include <stdexcept>
 #include <iostream>
-#include "../hip_rtc_compiler.hpp"
+#include "../hiprtc_utils/hip_rtc_compiler.hpp"
 #include "../utils/MeasurementSeries.hpp"
 
 namespace rocmgpubenches {
