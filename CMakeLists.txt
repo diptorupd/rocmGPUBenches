@@ -16,25 +16,30 @@ endif()
 
 list(APPEND CMAKE_PREFIX_PATH ${HIP_PATH})
 
-# Enable HIP language support
+# Find HIP (for runtime library only)
 find_package(hip REQUIRED)
 
 # Find pybind11
 find_package(pybind11 CONFIG REQUIRED)
 
-# Create the Python extension module
+# Create the Python extension module (pure C++ - no device code)
 pybind11_add_module(rocmGPUBenches 
     src/rocmGPUBenches/rocmGPUBenches.cpp
     src/rocmGPUBenches/main.cpp
     src/rocmGPUBenches/hip_rtc_bindings.cpp
+    src/rocmGPUBenches/gpu_cache_bindings.cpp
+    src/rocmGPUBenches/gpu_cache_benchmark.cpp
 )
 
-# Link against HIP and hipRTC
+# Link against HIP runtime and hipRTC (host libraries only)
 target_link_libraries(rocmGPUBenches PRIVATE hip::host)
 target_link_libraries(rocmGPUBenches PRIVATE ${HIP_PATH}/lib/libhiprtc.so)
 
-# Add HIP include directories
-target_include_directories(rocmGPUBenches PRIVATE ${HIP_PATH}/include)
+# Add include directories
+target_include_directories(rocmGPUBenches PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/rocmGPUBenches
+    ${HIP_PATH}/include
+)
 
 # Set C++ standard
 target_compile_features(rocmGPUBenches PRIVATE cxx_std_17)
