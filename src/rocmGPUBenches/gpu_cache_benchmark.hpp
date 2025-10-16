@@ -3,7 +3,6 @@
 #include <hip/hip_runtime.h>
 #include <string>
 #include <vector>
-#include <map>
 #include "hip_rtc_compiler.hpp"
 #include "utils/MeasurementSeries.hpp"
 #include "utils/gpu-error.h"
@@ -42,14 +41,14 @@ private:
     // HipRTC compiler instance
     HipRTCCompiler compiler_;
     
-    // Cache for compiled kernels (key: "N_iters_blockSize")
-    std::map<std::string, std::vector<char>> kernel_cache_;
-    std::map<std::string, hipModule_t> module_cache_;
-    std::map<std::string, hipFunction_t> function_cache_;
+    // Single compiled module and functions (no per-parameter caching needed)
+    hipModule_t module_;
+    hipFunction_t init_kernel_;
+    hipFunction_t sum_kernel_;
+    bool kernel_compiled_;
     
     void cleanup();
-    void compile_and_load_kernel(int N, int iters, int blockSize);
-    std::string make_kernel_key(int N, int iters, int blockSize);
+    void ensure_kernel_compiled();
 };
 
 } // namespace rocmgpubenches
