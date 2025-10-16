@@ -40,14 +40,23 @@ void GPUCacheBenchmark::ensure_kernel_compiled() {
         return;
     }
     
-    std::cout << "Compiling GPU cache kernel (one-time compilation)..." << std::endl;
+    std::cout << "Compiling GPU cache kernel with optimizations (one-time compilation)..." << std::endl;
     
     // Get the parameterized kernel source
     std::string kernel_source = get_gpu_cache_kernel_source();
     
-    // Compile using hipRTC
+    // Prepare optimization flags for hipRTC
+    std::vector<std::string> compile_options = {
+        "-O3",                  // Maximum optimization level
+        "-ffast-math",          // Aggressive floating-point optimizations
+        "--gpu-max-threads-per-block=1024"
+    };
+    
+    std::cout << "Compile flags: -O3 -ffast-math --gpu-max-threads-per-block=1024" << std::endl;
+    
+    // Compile using hipRTC with optimization flags
     std::string kernel_name = "gpu_cache_kernel";
-    std::vector<char> compiled_code = compiler_.compile(kernel_source, kernel_name);
+    std::vector<char> compiled_code = compiler_.compile(kernel_source, kernel_name, compile_options);
     
     // Load module
     hipError_t err = hipModuleLoadData(&module_, compiled_code.data());
