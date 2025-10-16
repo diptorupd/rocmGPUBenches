@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(rocmGPUBenches LANGUAGES CXX)
+project(_rocmGPUBenches LANGUAGES CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -19,7 +19,7 @@ if(NOT DEFINED HIP_PATH)
 endif()
 
 # Create the Python module
-pybind11_add_module(rocmGPUBenches 
+pybind11_add_module(_rocmGPUBenches 
     src/rocmGPUBenches/main.cpp
     src/rocmGPUBenches/rocmGPUBenches.cpp
     src/rocmGPUBenches/hiprtc_utils/hip_rtc_bindings.cpp
@@ -28,22 +28,22 @@ pybind11_add_module(rocmGPUBenches
 )
 
 # Include directories
-target_include_directories(rocmGPUBenches PRIVATE 
+target_include_directories(_rocmGPUBenches PRIVATE 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/rocmGPUBenches
     ${HIP_PATH}/include
 )
 
 # Link libraries directly
-target_link_libraries(rocmGPUBenches PRIVATE 
+target_link_libraries(_rocmGPUBenches PRIVATE 
     ${HIP_PATH}/lib/libamdhip64.so
     ${HIP_PATH}/lib/libhiprtc.so
 )
 
 # Set compile definitions
-target_compile_definitions(rocmGPUBenches PRIVATE 
+target_compile_definitions(_rocmGPUBenches PRIVATE 
     USE_PROF_API=1
     __HIP_PLATFORM_AMD__=1
 )
 
 # Installation
-install(TARGETS rocmGPUBenches LIBRARY DESTINATION .)
+install(TARGETS _rocmGPUBenches LIBRARY DESTINATION .)
