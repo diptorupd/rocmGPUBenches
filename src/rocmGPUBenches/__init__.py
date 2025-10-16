@@ -11,6 +11,7 @@ try:
     BenchmarkRunner = _rocmGPUBenches.BenchmarkRunner
     BenchmarkResult = _rocmGPUBenches.BenchmarkResult
     create_cache_benchmark_runner = _rocmGPUBenches.create_cache_benchmark_runner
+    create_latency_benchmark_runner = _rocmGPUBenches.create_latency_benchmark_runner
     _cpp_extensions_available = True
 except ImportError as e:
     warnings.warn(f"C++ extension not available: {e}")
@@ -45,7 +46,8 @@ if _cpp_extensions_available:
         'GPUCacheBenchmark',
         'BenchmarkRunner',
         'BenchmarkResult',
-        'create_cache_benchmark_runner'
+        'create_cache_benchmark_runner',
+        'create_latency_benchmark_runner'
     ])
 
 __version__ = "0.0.1"
