@@ -4,8 +4,8 @@ __version__ = "0.0.1"
 
 # Import the compiled extension module
 try:
-    from .rocmGPUBenches import hello
-    __all__ = ['hello']
+    from .rocmGPUBenches import hello, HipRTCCompiler
+    __all__ = ['hello', 'HipRTCCompiler']
 except ImportError as e:
     # Module not yet built
     import warnings
